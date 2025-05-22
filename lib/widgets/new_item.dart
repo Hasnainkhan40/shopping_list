@@ -19,10 +19,14 @@ class _NewItemState extends State<NewItem> {
   var _enteredName = '';
   var _enteresQuantity = 1;
   var _selectedCategory = categories[Categories.vegetables]!;
+  var _isSending = false;
 
   void _saveItem() async {
     if (_formKye.currentState!.validate()) {
       _formKye.currentState!.save();
+      setState(() {
+        _isSending = true;
+      });
       final url = Uri.https(
         'flutter-prep-fa102-default-rtdb.firebaseio.com',
         'shopping-list.json',
@@ -36,6 +40,12 @@ class _NewItemState extends State<NewItem> {
           'category': _selectedCategory.titel,
         }),
       );
+
+      if (response.body == 'null') {
+        setState(() {
+          return;
+        });
+      }
 
       final Map<String, dynamic> resData = json.decode(response.body);
       if (!context.mounted) {
@@ -138,12 +148,25 @@ class _NewItemState extends State<NewItem> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () {
-                      _formKye.currentState!.reset();
-                    },
+                    onPressed:
+                        _isSending
+                            ? null
+                            : () {
+                              _formKye.currentState!.reset();
+                            },
                     child: const Text('Reset'),
                   ),
-                  ElevatedButton(onPressed: _saveItem, child: Text('Add Item')),
+                  ElevatedButton(
+                    onPressed: _isSending ? null : _saveItem,
+                    child:
+                        _isSending
+                            ? SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: CircularProgressIndicator(),
+                            )
+                            : const Text('Add Item'),
+                  ),
                 ],
               ),
             ],
